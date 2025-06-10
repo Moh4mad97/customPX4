@@ -115,6 +115,7 @@ set(msg_files
 	HeaterStatus.msg
 	HoverThrustEstimate.msg
 	InputRc.msg
+	IntegratedAccel.msg
 	InternalCombustionEngineControl.msg
 	InternalCombustionEngineStatus.msg
 	IridiumsbdStatus.msg
