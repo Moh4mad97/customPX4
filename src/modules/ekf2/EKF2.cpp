@@ -790,6 +790,10 @@ void EKF2::Run()
 			PublishOdometry(now, imu_sample_new);
 			PublishGlobalPosition(now);
 			PublishSensorBias(now);
+			//////////////////////////////////////
+			// Publish your new topic
+			PublishIntegratedAccel(now,imu_sample_new);
+			//////////////////////////////////////
 
 #if defined(CONFIG_EKF2_WIND)
 			PublishWindEstimate(now);
@@ -843,6 +847,7 @@ void EKF2::Run()
 
 	// re-schedule as backup timeout
 	ScheduleDelayed(100_ms);
+
 }
 
 void EKF2::VerifyParams()
@@ -1217,6 +1222,35 @@ void EKF2::PublishGlobalPosition(const hrt_abstime &timestamp)
 		_global_position_pub.publish(global_pos);
 	}
 }
+
+//////////////////////////////////////
+void EKF2::PublishIntegratedAccel(const hrt_abstime &timestamp, const imuSample &imu_sample)
+{
+    integrated_accel_s msg{};
+    msg.timestamp = timestamp;
+    msg.timestamp_sample = imu_sample.time_us;
+
+    // Get intigrate accel:
+//     msg.integrated_accel[0] = imu_sample.delta_vel(0);
+//     msg.integrated_accel[1] = imu_sample.delta_vel(1);
+//     msg.integrated_accel[2] = imu_sample.delta_vel(2);
+//     msg.integrated_accel[0] = 0;
+//     msg.integrated_accel[1] = 0;
+//     msg.integrated_accel[2] = 0;
+
+    // Accumulate the integrated acceleration by adding delta_vel to previous values
+    _integrated_accel(0) += imu_sample.delta_vel(0);
+    _integrated_accel(1) += imu_sample.delta_vel(1);
+    _integrated_accel(2) += imu_sample.delta_vel(2);
+
+    // Set the message values to the accumulated integrated acceleration
+    msg.integrated_accel[0] = _integrated_accel(0);
+    msg.integrated_accel[1] = _integrated_accel(1);
+    msg.integrated_accel[2] = _integrated_accel(2);
+
+    _integrated_accel_pub.publish(msg);
+}
+/////////////////////////////////////
 
 #if defined(CONFIG_EKF2_GNSS)
 void EKF2::PublishGpsStatus(const hrt_abstime &timestamp)
@@ -3088,3 +3122,6 @@ extern "C" __EXPORT int ekf2_main(int argc, char *argv[])
 
 	return ret;
 }
+
+
+

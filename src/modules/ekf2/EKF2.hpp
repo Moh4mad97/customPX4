@@ -88,6 +88,8 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/yaw_estimator_status.h>
 
+#include <uORB/topics/integrated_accel.h>
+
 #if defined(CONFIG_EKF2_AIRSPEED)
 # include <uORB/topics/airspeed.h>
 # include <uORB/topics/airspeed_validated.h>
@@ -125,6 +127,11 @@
 
 extern pthread_mutex_t ekf2_module_mutex;
 
+///////////////////////////////////////////
+
+ORB_DECLARE(integrated_accel);
+//////////////////////////////////////
+
 class EKF2 final : public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
@@ -158,6 +165,7 @@ public:
 	int instance() const { return _instance; }
 
 private:
+	matrix::Vector3f _integrated_accel{0.f, 0.f, 0.f}; ///////////////////////
 
 	static constexpr uint8_t MAX_NUM_IMUS = 4;
 	static constexpr uint8_t MAX_NUM_MAGS = 4;
@@ -191,6 +199,9 @@ private:
 	void PublishLocalPosition(const hrt_abstime &timestamp);
 	void PublishOdometry(const hrt_abstime &timestamp, const imuSample &imu_sample);
 	void PublishSensorBias(const hrt_abstime &timestamp);
+	/////////////////////////
+	void PublishIntegratedAccel(const hrt_abstime &timestamp, const imuSample &imu_sample);
+	/////////////////////////
 	void PublishStates(const hrt_abstime &timestamp);
 	void PublishStatus(const hrt_abstime &timestamp);
 	void PublishStatusFlags(const hrt_abstime &timestamp);
@@ -438,6 +449,11 @@ private:
 	uORB::PublicationMulti<vehicle_local_position_s>     _local_position_pub;
 	uORB::PublicationMulti<vehicle_global_position_s>    _global_position_pub;
 	uORB::PublicationMulti<vehicle_odometry_s>           _odometry_pub;
+
+	////////////////////////////////////////////////////////////
+	uORB::PublicationMulti<integrated_accel_s>           _integrated_accel_pub{ORB_ID(integrated_accel)};
+	////////////////////////////////////////////////////////////
+
 
 #if defined(CONFIG_EKF2_WIND)
 	uORB::PublicationMulti<wind_s>              _wind_pub;
